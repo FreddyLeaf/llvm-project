@@ -1867,12 +1867,16 @@ static bool HasStrictReturn(const CodeGenModule &Module, QualType RetTy,
 /// -f32 case.
 static void addDenormalModeAttrs(llvm::DenormalMode FPDenormalMode,
                                  llvm::DenormalMode FP32DenormalMode,
+                                 llvm::DenormalMode BF16DenormalMode,
                                  llvm::AttrBuilder &FuncAttrs) {
   if (FPDenormalMode != llvm::DenormalMode::getDefault())
     FuncAttrs.addAttribute("denormal-fp-math", FPDenormalMode.str());
 
   if (FP32DenormalMode != FPDenormalMode && FP32DenormalMode.isValid())
     FuncAttrs.addAttribute("denormal-fp-math-f32", FP32DenormalMode.str());
+
+  if (BF16DenormalMode != FPDenormalMode && BF16DenormalMode.isValid())
+    FuncAttrs.addAttribute("denormal-fp-math-bf16", BF16DenormalMode.str());
 }
 
 /// Add default attributes to a function, which have merge semantics under
@@ -1882,7 +1886,7 @@ static void
 addMergableDefaultFunctionAttributes(const CodeGenOptions &CodeGenOpts,
                                      llvm::AttrBuilder &FuncAttrs) {
   addDenormalModeAttrs(CodeGenOpts.FPDenormalMode, CodeGenOpts.FP32DenormalMode,
-                       FuncAttrs);
+                       CodeGenOpts.BF16DenormalMode, FuncAttrs);
 }
 
 static void getTrivialDefaultFunctionAttributes(
@@ -2098,13 +2102,20 @@ void CodeGen::mergeDefaultFunctionDefinitionAttributes(
 
   llvm::DenormalMode DenormModeToMerge = F.getDenormalModeRaw();
   llvm::DenormalMode DenormModeToMergeF32 = F.getDenormalModeF32Raw();
+  llvm::DenormalMode DenormModeToMergeBF16 = F.getDenormalModeBF16Raw();
   llvm::DenormalMode Merged =
       CodeGenOpts.FPDenormalMode.mergeCalleeMode(DenormModeToMerge);
   llvm::DenormalMode MergedF32 = CodeGenOpts.FP32DenormalMode;
+  llvm::DenormalMode MergedBF16 = CodeGenOpts.BF16DenormalMode;
 
   if (DenormModeToMergeF32.isValid()) {
     MergedF32 =
         CodeGenOpts.FP32DenormalMode.mergeCalleeMode(DenormModeToMergeF32);
+  }
+
+  if (DenormModeToMergeBF16.isValid()) {
+    MergedBF16 =
+        CodeGenOpts.BF16DenormalMode.mergeCalleeMode(DenormModeToMergeBF16);
   }
 
   if (Merged == llvm::DenormalMode::getDefault()) {
@@ -2123,8 +2134,16 @@ void CodeGen::mergeDefaultFunctionDefinitionAttributes(
                            CodeGenOpts.FP32DenormalMode.str());
   }
 
+  if (MergedBF16 == llvm::DenormalMode::getDefault()) {
+    AttrsToRemove.addAttribute("denormal-fp-math-bf16");
+  } else if (MergedBF16 != DenormModeToMergeBF16) {
+    // Overwrite existing attribute
+    FuncAttrs.addAttribute("denormal-fp-math-bf16",
+                           CodeGenOpts.BF16DenormalMode.str());
+  }
+
   F.removeFnAttrs(AttrsToRemove);
-  addDenormalModeAttrs(Merged, MergedF32, FuncAttrs);
+  addDenormalModeAttrs(Merged, MergedF32, MergedBF16, FuncAttrs);
 
   overrideFunctionFeaturesWithTargetFeatures(FuncAttrs, F, TargetOpts);
 

@@ -425,6 +425,10 @@ namespace llvm {
     /// float.
     DenormalMode FP32DenormalMode;
 
+    /// Flushing mode to assume in default FP environment, for float/vector of
+    /// bfloat.
+    DenormalMode BF16DenormalMode;
+
   public:
     void setFPDenormalMode(DenormalMode Mode) {
       FPDenormalMode = Mode;
@@ -434,6 +438,8 @@ namespace llvm {
       FP32DenormalMode = Mode;
     }
 
+    void setBF16DenormalMode(DenormalMode Mode) { BF16DenormalMode = Mode; }
+
     DenormalMode getRawFPDenormalMode() const {
       return FPDenormalMode;
     }
@@ -441,6 +447,8 @@ namespace llvm {
     DenormalMode getRawFP32DenormalMode() const {
       return FP32DenormalMode;
     }
+
+    DenormalMode getRawBF16DenormalMode() const { return BF16DenormalMode; }
 
     DenormalMode getDenormalMode(const fltSemantics &FPType) const;
 

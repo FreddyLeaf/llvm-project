@@ -699,6 +699,11 @@ public:
   /// instead.
   DenormalMode getDenormalModeF32Raw() const;
 
+  /// Return the representational value of "denormal-fp-math-bf16". Code
+  /// interested in the semantics of the function should use getDenormalMode
+  /// instead.
+  DenormalMode getDenormalModeBF16Raw() const;
+
   /// copyAttributesFrom - copy all additional attributes (those not needed to
   /// create a Function) from the Function Src to this one.
   void copyAttributesFrom(const Function *Src);

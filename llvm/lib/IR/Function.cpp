@@ -767,6 +767,16 @@ DenormalMode Function::getDenormalModeF32Raw() const {
   return DenormalMode::getInvalid();
 }
 
+DenormalMode Function::getDenormalModeBF16Raw() const {
+  Attribute Attr = getFnAttribute("denormal-fp-math-bf16");
+  if (Attr.isValid()) {
+    StringRef Val = Attr.getValueAsString();
+    return parseDenormalFPAttribute(Val);
+  }
+
+  return DenormalMode::getInvalid();
+}
+
 const std::string &Function::getGC() const {
   assert(hasGC() && "Function has no collector");
   return getContext().getGC(*this);

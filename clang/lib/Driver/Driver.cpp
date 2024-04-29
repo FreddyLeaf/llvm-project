@@ -47,6 +47,7 @@
 #include "ToolChains/TCE.h"
 #include "ToolChains/VEToolchain.h"
 #include "ToolChains/WebAssembly.h"
+#include "ToolChains/X86Toolchain.h"
 #include "ToolChains/XCore.h"
 #include "ToolChains/ZOS.h"
 #include "clang/Basic/DiagnosticDriver.h"

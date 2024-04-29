@@ -7229,6 +7229,8 @@ def ehcontguard : Flag<["-"], "ehcontguard">,
 
 def fdenormal_fp_math_f32_EQ : Joined<["-"], "fdenormal-fp-math-f32=">,
    Group<f_Group>;
+def fdenormal_fp_math_bf16_EQ : Joined<["-"], "fdenormal-fp-math-bf16=">,
+   Group<f_Group>;
 
 def fctor_dtor_return_this : Flag<["-"], "fctor-dtor-return-this">,
   HelpText<"Change the C++ ABI to returning `this` pointer from constructors "

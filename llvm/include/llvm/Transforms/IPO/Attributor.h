@@ -5134,17 +5134,20 @@ struct DenormalFPMathState : public AbstractState {
   struct DenormalState {
     DenormalMode Mode = DenormalMode::getInvalid();
     DenormalMode ModeF32 = DenormalMode::getInvalid();
+    DenormalMode ModeBF16 = DenormalMode::getInvalid();
 
     bool operator==(const DenormalState Other) const {
-      return Mode == Other.Mode && ModeF32 == Other.ModeF32;
+      return Mode == Other.Mode && ModeF32 == Other.ModeF32 &&
+             ModeBF16 == Other.ModeBF16;
     }
 
     bool operator!=(const DenormalState Other) const {
-      return Mode != Other.Mode || ModeF32 != Other.ModeF32;
+      return Mode != Other.Mode || ModeF32 != Other.ModeF32 ||
+             ModeBF16 != Other.ModeBF16;
     }
 
     bool isValid() const {
-      return Mode.isValid() && ModeF32.isValid();
+      return Mode.isValid() && ModeF32.isValid() && ModeBF16.isValid();
     }
 
     static DenormalMode::DenormalModeKind
@@ -5168,6 +5171,7 @@ struct DenormalFPMathState : public AbstractState {
       DenormalState Callee(*this);
       Callee.Mode = unionAssumed(Callee.Mode, Caller.Mode);
       Callee.ModeF32 = unionAssumed(Callee.ModeF32, Caller.ModeF32);
+      Callee.ModeBF16 = unionAssumed(Callee.ModeBF16, Caller.ModeBF16);
       return Callee;
     }
   };
@@ -5195,7 +5199,9 @@ struct DenormalFPMathState : public AbstractState {
     return Known.Mode.Input != DenormalMode::Dynamic &&
            Known.Mode.Output != DenormalMode::Dynamic &&
            Known.ModeF32.Input != DenormalMode::Dynamic &&
-           Known.ModeF32.Output != DenormalMode::Dynamic;
+           Known.ModeF32.Output != DenormalMode::Dynamic &&
+           Known.ModeBF16.Input != DenormalMode::Dynamic &&
+           Known.ModeBF16.Output != DenormalMode::Dynamic;
   }
 
   bool isAtFixpoint() const override {

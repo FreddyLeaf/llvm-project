@@ -344,6 +344,7 @@ def UseSampleProfile : StrBoolAttr<"use-sample-profile">;
 
 def DenormalFPMath : ComplexStrAttr<"denormal-fp-math", [FnAttr]>;
 def DenormalFPMathF32 : ComplexStrAttr<"denormal-fp-math-f32", [FnAttr]>;
+def DenormalFPMathBF16 : ComplexStrAttr<"denormal-fp-math-bf16", [FnAttr]>;
 
 // Attribute compatiblity rules are generated to check the attribute of the
 // caller and callee and decide whether inlining should be allowed. CompatRule

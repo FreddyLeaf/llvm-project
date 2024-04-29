@@ -3432,6 +3432,11 @@ void Attributor::identifyDefaultAbstractAttributes(Function &F) {
         Mode.Output == DenormalMode::Dynamic)
       getOrCreateAAFor<AADenormalFPMath>(FPos);
 
+    Mode = F.getDenormalMode(APFloat::BFloat());
+    if (Mode.Input == DenormalMode::Dynamic ||
+        Mode.Output == DenormalMode::Dynamic)
+      getOrCreateAAFor<AADenormalFPMath>(FPos);
+
     // Return attributes are only appropriate if the return type is non void.
     Type *ReturnType = F.getReturnType();
     if (!ReturnType->isVoidTy()) {

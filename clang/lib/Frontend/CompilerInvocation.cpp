@@ -1644,6 +1644,11 @@ void CompilerInvocationBase::GenerateCodeGenArgs(const CodeGenOptions &Opts,
     GenerateArg(Consumer, OPT_fdenormal_fp_math_f32_EQ,
                 Opts.FP32DenormalMode.str());
 
+  if ((Opts.FPDenormalMode != Opts.BF16DenormalMode) ||
+      (Opts.BF16DenormalMode != llvm::DenormalMode::getIEEE()))
+    GenerateArg(Consumer, OPT_fdenormal_fp_math_bf16_EQ,
+                Opts.BF16DenormalMode.str());
+
   if (Opts.StructReturnConvention == CodeGenOptions::SRCK_OnStack) {
     OptSpecifier Opt =
         T.isPPC32() ? OPT_maix_struct_return : OPT_fpcc_struct_return;
@@ -1995,6 +2000,7 @@ bool CompilerInvocation::ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args,
     StringRef Val = A->getValue();
     Opts.FPDenormalMode = llvm::parseDenormalFPAttribute(Val);
     Opts.FP32DenormalMode = Opts.FPDenormalMode;
+    Opts.BF16DenormalMode = Opts.FPDenormalMode;
     if (!Opts.FPDenormalMode.isValid())
       Diags.Report(diag::err_drv_invalid_value) << A->getAsString(Args) << Val;
   }
@@ -2003,6 +2009,13 @@ bool CompilerInvocation::ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args,
     StringRef Val = A->getValue();
     Opts.FP32DenormalMode = llvm::parseDenormalFPAttribute(Val);
     if (!Opts.FP32DenormalMode.isValid())
+      Diags.Report(diag::err_drv_invalid_value) << A->getAsString(Args) << Val;
+  }
+
+  if (Arg *A = Args.getLastArg(OPT_fdenormal_fp_math_bf16_EQ)) {
+    StringRef Val = A->getValue();
+    Opts.BF16DenormalMode = llvm::parseDenormalFPAttribute(Val);
+    if (!Opts.BF16DenormalMode.isValid())
       Diags.Report(diag::err_drv_invalid_value) << A->getAsString(Args) << Val;
   }
 

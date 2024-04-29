@@ -8870,13 +8870,16 @@ struct AADenormalFPMathFunction final : AADenormalFPMathImpl {
     const Function *F = getAnchorScope();
     DenormalMode Mode = F->getDenormalModeRaw();
     DenormalMode ModeF32 = F->getDenormalModeF32Raw();
+    DenormalMode ModeBF16 = F->getDenormalModeBF16Raw();
 
     // TODO: Handling this here prevents handling the case where a callee has a
     // fixed denormal-fp-math with dynamic denormal-fp-math-f32, but called from
     // a function with a fully fixed mode.
     if (ModeF32 == DenormalMode::getInvalid())
       ModeF32 = Mode;
-    Known = DenormalState{Mode, ModeF32};
+    if (ModeBF16 == DenormalMode::getInvalid())
+      ModeBF16 = Mode;
+    Known = DenormalState{Mode, ModeF32, ModeBF16};
     if (isModeFixed())
       indicateFixpoint();
   }
@@ -8925,6 +8928,13 @@ struct AADenormalFPMathFunction final : AADenormalFPMathImpl {
           Attribute::get(Ctx, "denormal-fp-math-f32", Known.ModeF32.str()));
     } else {
       AttrToRemove.push_back("denormal-fp-math-f32");
+    }
+
+    if (Known.ModeBF16 != Known.Mode) {
+      AttrToAdd.push_back(
+          Attribute::get(Ctx, "denormal-fp-math-bf16", Known.ModeBF16.str()));
+    } else {
+      AttrToRemove.push_back("denormal-fp-math-bf16");
     }
 
     auto &IRP = getIRPosition();

@@ -30,6 +30,24 @@ void getX86TargetFeatures(const Driver &D, const llvm::Triple &Triple,
 
 } // end namespace x86
 } // end namespace target
+// namespace toolchains {
+// // Common Toolchain base class for X86.
+// class LLVM_LIBRARY_VISIBILITY X86ToolChain : public Generic_ELF {
+// public:
+//     X86ToolChain(const Driver &D, const llvm::Triple &Triple,
+//                          const llvm::opt::ArgList &Args, StringRef Platform,
+//                          const char *EnvVar);
+//
+//     llvm::DenormalMode getDefaultDenormalModeForType(
+//             const llvm::opt::ArgList &DriverArgs, const JobAction &JA,
+//             const llvm::fltSemantics *FPType) const override {
+//         // DAZ and FTZ are on by default for bf16.
+//         if (FPType == &llvm::APFloat::BFloat())
+//             return llvm::DenormalMode::getPreserveSign();
+//         return llvm::DenormalMode::getIEEE();
+//     }
+// };
+// } // end namespace toolchains
 } // end namespace driver
 } // end namespace clang
 

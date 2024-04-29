@@ -2113,9 +2113,13 @@ static bool checkDenormMode(const Function &Caller, const Function &Callee) {
   if (denormModeCompatible(CallerMode, CalleeMode)) {
     DenormalMode CallerModeF32 = Caller.getDenormalModeF32Raw();
     DenormalMode CalleeModeF32 = Callee.getDenormalModeF32Raw();
-    if (CallerModeF32 == DenormalMode::getInvalid())
+    DenormalMode CallerModeBF16 = Caller.getDenormalModeBF16Raw();
+    DenormalMode CalleeModeBF16 = Callee.getDenormalModeBF16Raw();
+    if (CallerModeF32 == DenormalMode::getInvalid() &&
+        CallerModeBF16 == DenormalMode::getInvalid())
       CallerModeF32 = CallerMode;
-    if (CalleeModeF32 == DenormalMode::getInvalid())
+    if (CalleeModeF32 == DenormalMode::getInvalid() &&
+        CalleeModeBF16 == DenormalMode::getInvalid())
       CalleeModeF32 = CalleeMode;
     return denormModeCompatible(CallerModeF32, CalleeModeF32);
   }

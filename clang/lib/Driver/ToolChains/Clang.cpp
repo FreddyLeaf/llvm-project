@@ -24,6 +24,7 @@
 #include "Hexagon.h"
 #include "MSP430.h"
 #include "PS4CPU.h"
+#include "X86Toolchain.h"
 #include "clang/Basic/CLWarnings.h"
 #include "clang/Basic/CharInfo.h"
 #include "clang/Basic/CodeGenOptions.h"
@@ -2747,9 +2748,16 @@ static void RenderFloatingPointOptions(const ToolChain &TC, const Driver &D,
       TC.getDefaultDenormalModeForType(Args, JA);
   const llvm::DenormalMode DefaultDenormalFP32Math =
       TC.getDefaultDenormalModeForType(Args, JA, &llvm::APFloat::IEEEsingle());
+  const llvm::DenormalMode DefaultDenormalBF16Math =
+      TC.getDefaultDenormalModeForType(Args, JA, &llvm::APFloat::BFloat());
 
   llvm::DenormalMode DenormalFPMath = DefaultDenormalFPMath;
   llvm::DenormalMode DenormalFP32Math = DefaultDenormalFP32Math;
+  llvm::DenormalMode DenormalBF16Math = DefaultDenormalBF16Math;
+  const llvm::Triple::ArchType Arch = TC.getArch();
+  if (Arch == llvm::Triple::x86 || Arch == llvm::Triple::x86_64)
+    DenormalBF16Math = llvm::DenormalMode::getPreserveSign();
+
   // CUDA and HIP don't rely on the frontend to pass an ffp-contract option.
   // If one wasn't given by the user, don't pass it here.
   StringRef FPContract;
@@ -2904,6 +2912,7 @@ static void RenderFloatingPointOptions(const ToolChain &TC, const Driver &D,
       // FIXME: The target may have picked a non-IEEE default mode here based on
       // -cl-denorms-are-zero. Should the target consider -fp-model interaction?
       DenormalFP32Math = llvm::DenormalMode::getIEEE();
+      DenormalBF16Math = llvm::DenormalMode::getIEEE();
 
       StringRef Val = A->getValue();
       if (OFastEnabled && !Val.equals("fast")) {
@@ -3000,6 +3009,7 @@ static void RenderFloatingPointOptions(const ToolChain &TC, const Driver &D,
     case options::OPT_fdenormal_fp_math_EQ:
       DenormalFPMath = llvm::parseDenormalFPAttribute(A->getValue());
       DenormalFP32Math = DenormalFPMath;
+      DenormalBF16Math = DenormalFPMath;
       if (!DenormalFPMath.isValid()) {
         D.Diag(diag::err_drv_invalid_value)
             << A->getAsString(Args) << A->getValue();
@@ -3009,6 +3019,14 @@ static void RenderFloatingPointOptions(const ToolChain &TC, const Driver &D,
     case options::OPT_fdenormal_fp_math_f32_EQ:
       DenormalFP32Math = llvm::parseDenormalFPAttribute(A->getValue());
       if (!DenormalFP32Math.isValid()) {
+        D.Diag(diag::err_drv_invalid_value)
+            << A->getAsString(Args) << A->getValue();
+      }
+      break;
+
+    case options::OPT_fdenormal_fp_math_bf16_EQ:
+      DenormalBF16Math = llvm::parseDenormalFPAttribute(A->getValue());
+      if (!DenormalBF16Math.isValid()) {
         D.Diag(diag::err_drv_invalid_value)
             << A->getAsString(Args) << A->getValue();
       }
@@ -3125,6 +3143,7 @@ static void RenderFloatingPointOptions(const ToolChain &TC, const Driver &D,
       // The target may have opted to flush by default, so force IEEE.
       DenormalFPMath = llvm::DenormalMode::getIEEE();
       DenormalFP32Math = llvm::DenormalMode::getIEEE();
+      DenormalBF16Math = llvm::DenormalMode::getIEEE();
       if (!JA.isDeviceOffloading(Action::OFK_Cuda) &&
           !JA.isOffloading(Action::OFK_HIP)) {
         if (LastSeenFfpContractOption != "") {
@@ -3157,6 +3176,7 @@ static void RenderFloatingPointOptions(const ToolChain &TC, const Driver &D,
       // -fno_fast_math restores default denormal and fpcontract handling
       DenormalFPMath = DefaultDenormalFPMath;
       DenormalFP32Math = llvm::DenormalMode::getIEEE();
+      DenormalBF16Math = llvm::DenormalMode::getIEEE();
       if (!JA.isDeviceOffloading(Action::OFK_Cuda) &&
           !JA.isOffloading(Action::OFK_HIP)) {
         if (LastSeenFfpContractOption != "") {
@@ -3173,6 +3193,7 @@ static void RenderFloatingPointOptions(const ToolChain &TC, const Driver &D,
           SignedZeros && TrappingMath && RoundingFPMath && !ApproxFunc &&
           DenormalFPMath == llvm::DenormalMode::getIEEE() &&
           DenormalFP32Math == llvm::DenormalMode::getIEEE() &&
+          DenormalBF16Math == llvm::DenormalMode::getIEEE() &&
           FPContract.equals("off"))
         // OK: Current Arg doesn't conflict with -ffp-model=strict
         ;
@@ -3235,6 +3256,14 @@ static void RenderFloatingPointOptions(const ToolChain &TC, const Driver &D,
     llvm::SmallString<64> DenormFlag;
     llvm::raw_svector_ostream ArgStr(DenormFlag);
     ArgStr << "-fdenormal-fp-math-f32=" << DenormalFP32Math;
+    CmdArgs.push_back(Args.MakeArgString(ArgStr.str()));
+  }
+
+  // Add bf16 specific denormal mode flag if it's different.
+  if (DenormalBF16Math != DenormalFPMath) {
+    llvm::SmallString<64> DenormFlag;
+    llvm::raw_svector_ostream ArgStr(DenormFlag);
+    ArgStr << "-fdenormal-fp-math-bf16=" << DenormalBF16Math;
     CmdArgs.push_back(Args.MakeArgString(ArgStr.str()));
   }
 
