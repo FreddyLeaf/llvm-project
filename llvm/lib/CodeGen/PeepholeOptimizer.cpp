@@ -1765,6 +1765,9 @@ bool PeepholeOptimizer::runOnMachineFunction(MachineFunction &MF) {
         NAPhysToVirtMIs.clear();
       }
 
+      // if (MI->isCompare())
+      //   dbgs() << "Freddy debug\n";
+
       if ((isUncoalescableCopy(*MI) &&
            optimizeUncoalescableCopy(*MI, LocalMIs)) ||
           (MI->isCompare() && optimizeCmpInstr(*MI)) ||

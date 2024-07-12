@@ -36,6 +36,7 @@ class Ctest<bits<8> o, Format f, X86TypeInfo t, DAGOperand op1, DAGOperand op2>:
 //===----------------------------------------------------------------------===//
 // CCMP Instructions
 //
+let isCompare = 1 in {
 let SchedRW = [WriteALU] in {
   def CCMP8rr : Ccmp<0x38, MRMDestReg, Xi8,  GR8,  GR8>;
   def CCMP16rr: Ccmp<0x39, MRMDestReg, Xi16, GR16, GR16>, PD;
@@ -76,6 +77,7 @@ let mayLoad = 1 in {
     def CCMP32mr: Ccmp<0x39, MRMDestMem, Xi32, i32mem, GR32>;
     def CCMP64mr: Ccmp<0x39, MRMDestMem, Xi64, i64mem, GR64>;
   }
+}
 }
 
 def : Pat<(X86ccmp GR8:$src1, GR8:$src2, timm:$dcf, timm:$cond, EFLAGS),

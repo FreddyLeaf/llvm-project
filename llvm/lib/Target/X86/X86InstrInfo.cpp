@@ -4823,6 +4823,10 @@ bool X86InstrInfo::analyzeCompare(const MachineInstr &MI, Register &SrcReg,
   switch (MI.getOpcode()) {
   default:
     break;
+  case X86::CCMP64ri32:
+  case X86::CCMP32ri:
+  case X86::CCMP16ri:
+  case X86::CCMP8ri:
   case X86::CMP64ri32:
   case X86::CMP32ri:
   case X86::CMP16ri:
@@ -4924,6 +4928,10 @@ bool X86InstrInfo::isRedundantFlagInstr(const MachineInstr &FlagI,
     }
     return false;
   }
+  case X86::CCMP64ri32:
+  case X86::CCMP32ri:
+  case X86::CCMP16ri:
+  case X86::CCMP8ri:
   case X86::CMP64ri32:
   case X86::CMP32ri:
   case X86::CMP16ri:
@@ -5514,6 +5522,7 @@ bool X86InstrInfo::optimizeCompareInstr(MachineInstr &CmpInstr, Register SrcReg,
       // Shift amount for min/max constants to adjust for 8/16/32 instruction
       // sizes.
       switch (OldCC) {
+// DEBUG
       case X86::COND_L: // x <s (C + 1)  -->  x <=s C
         if (ImmDelta != 1 || APInt::getSignedMinValue(BitWidth) == CmpValue)
           return false;
